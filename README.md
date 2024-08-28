@@ -11,7 +11,7 @@ This repository contains the full implementation of **e-SeaFL** paper (condition
 - **AssistingNodeCode/**: Contains the `AssistingNodeCode.py` file, which manages the operations of assisting nodes in the system.
 - **AesModeCTR-master/**: Contains the C++ implementation for AES encryption in CTR mode.
 - **Compilation Scripts**:
-  - `auto_setup`: Bash script to automatically install the required libraries and packages. 
+  - `auto_setup.sh`: Bash script to automatically install the required libraries and packages. 
   - `script.sh`: Bash script to compile necessary binaries (`aggregation.so`, `AesModeCTR`) and run the entire system.
 
 ## Prerequisites
