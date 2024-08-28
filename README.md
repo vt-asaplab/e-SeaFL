@@ -74,9 +74,3 @@ To run the e-SeaFL system, use the following command:
 ```bash
 ./script.sh -u 200 -a 3 -c 1 -o 2 -p 10300
 ```
-
-**Running with 200 users, 3 assisting nodes, with commitment, and printing the summary:**
-
-```bash
-./script.sh -u 200 -a 3 -c 1 -o 2 -p 10000
-```
