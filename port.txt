@@ -1,0 +1,2 @@
+ServerPort = 9659
+FirstAssistantNodePort = 11659
