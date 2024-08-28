@@ -97,7 +97,7 @@ for ((i=1; i<=$num_users; i++)); do
     
     if [ $i -eq $num_users ]; then
         if [ $commitment -eq 1 ]; then
-            sleep 2
+            sleep 4
         else
             sleep 1
         fi
