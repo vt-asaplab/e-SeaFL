@@ -1,6 +1,6 @@
 # Efficient Secure Aggregation for Privacy-Preserving Federated Machine Learning
 
-This repository contains the full implementation of **e-SeaFL** paper (conditionally accepted to ACSAC 2024).
+This repository contains the full implementation of **e-SeaFL** paper (accepted to ACSAC 2024).
 
 **Warning**: This code is a proof-of-concept prototype and is not ready for production use.
 
