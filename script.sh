@@ -3,10 +3,21 @@
 # Set the project directory based on the current working directory
 PROJECT_DIR=$(pwd)
 
-#g++ -shared -o aggregation.so aggregation.cpp
-# Compile the required binaries
-g++ -shared -o aggregation.so -fPIC aggregation.cpp
-g++ -o AesModeCTR $PROJECT_DIR/AesModeCTR-master/AesModeCTR.cpp $PROJECT_DIR/AesModeCTR-master/TestAesModeCTR.cpp -lssl -lcrypto
+# Determine OS and set flags for OpenSSL path accordingly
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OPENSSL_LIB_PATH=""
+    OPENSSL_INCLUDE_PATH=""
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS, adjust as needed if paths differ
+    OPENSSL_LIB_PATH="-L$(brew --prefix openssl@3)/lib"
+    OPENSSL_INCLUDE_PATH="-I$(brew --prefix openssl@3)/include"
+else
+    echo "Unsupported operating system."
+    exit 1
+fi
+
+g++ -shared -o $PROJECT_DIR/aggregation.so -fPIC $PROJECT_DIR/aggregation.cpp
+g++ -o $PROJECT_DIR/AesModeCTR $PROJECT_DIR/AesModeCTR-master/AesModeCTR.cpp $PROJECT_DIR/AesModeCTR-master/TestAesModeCTR.cpp $OPENSSL_INCLUDE_PATH $OPENSSL_LIB_PATH -lssl -lcrypto
 
 # Default values for options
 num_users="" # Number of users
