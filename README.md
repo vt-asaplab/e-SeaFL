@@ -27,7 +27,7 @@ Before running the system, ensure that the following software is installed:
 To automatically install the required libraries and packages, run the following script:
 
 ```bash
-sudo ./auto_setup.sh
+./auto_setup.sh
 ```
 
 ### Running e-SeaFL Code
