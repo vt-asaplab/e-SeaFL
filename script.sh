@@ -25,6 +25,7 @@ num_assisting_nodes="" # Number of assisting nodes
 commitment="" # Commitment mode: 0 or 1
 printAggOutput=0 # Output behavior: 0, 1, or 2 (default 0)
 server_port=9000 # Server port number (default 9000)
+bandwidth_mode=0 # Bandwidth mode: 0 or 1 (default 0)
 
 # Function to display usage information
 usage() {
@@ -42,14 +43,32 @@ usage() {
     exit 1
 }
 
+usage() {
+    echo -e "\nUsage: $0 -u <number_of_users> -a <number_of_assisting_nodes> -c <commitment> [-o <printAggOutput>] [-p <server_port>] [-b <bandwidth_mode>]"
+    echo -e "\nOptions:"
+    echo "  -u <number_of_users>              Required. Number of users (must be greater than 2)"
+    echo "  -a <number_of_assisting_nodes>    Required. Number of assisting nodes"
+    echo "  -c <commitment>                   Required. 0: without commitment, 1: with commitment"
+    echo "  -o <printAggOutput>               Optional. 0: no print, 1: print result, 2: print summary (default: 0)"
+    echo "  -p <server_port>                  Optional. Server port (default: 9000, range: 2000-60000)"
+    echo "  -b <bandwidth_mode>               Optional. 0: no print, 1: print outbound bandwidth, 2: only print outbound bandwidth (default: 0)"
+    echo -e "\nExample:"
+    echo "  $0 -u 200 -a 3 -c 0 -b 1"
+    echo "  $0 -u 200 -a 3 -c 1 -o 2 -p 10000"
+    echo "  $0 -u 200 -a 3 -p 10000 -b 2"
+    echo -e "\n"
+    exit 1
+}
+
 # Parse command-line arguments
-while getopts "u:a:c:o:p:" opt; do
+while getopts "u:a:c:o:p:b:" opt; do
     case ${opt} in
         u) num_users=$OPTARG ;;
         a) num_assisting_nodes=$OPTARG ;;
         c) commitment=$OPTARG ;;
         o) printAggOutput=$OPTARG ;;
         p) server_port=$OPTARG ;;
+        b) bandwidth_mode=$OPTARG ;;
         *) usage ;;
     esac
 done
@@ -84,6 +103,12 @@ if [ "$server_port" -lt 2000 ] || [ "$server_port" -gt 60000 ]; then
     exit 1
 fi
 
+# Validate bandwidth_mode value
+if [ "$bandwidth_mode" -ne 0 ] && [ "$bandwidth_mode" -ne 1 ] && [ "$bandwidth_mode" -ne 2 ]; then
+    echo -e "\nError: bandwidth_mode must be 0 (no print), 1 (print outbound bandwidth), or 2 (only print outbound bandwidth)."
+    usage
+fi
+
 # Update the port.txt file
 {
     echo "ServerPort = $server_port"
@@ -91,20 +116,20 @@ fi
 } > port.txt
 
 # Start the server
-python3 $PROJECT_DIR/ServerCode/Server.py $num_users $num_assisting_nodes $commitment $printAggOutput &
+python3 $PROJECT_DIR/ServerCode/Server.py $num_users $num_assisting_nodes $commitment $printAggOutput $bandwidth_mode &
 
 # Allow server to initialize
 sleep 1
 
 # Start assisting nodes
 for ((i=1; i<=$num_assisting_nodes; i++)); do
-    python3 $PROJECT_DIR/AssistingNodeCode/AssistingNodeCode.py $i $num_users $num_assisting_nodes $commitment &
+    python3 $PROJECT_DIR/AssistingNodeCode/AssistingNodeCode.py $i $num_users $num_assisting_nodes $commitment $bandwidth_mode &
     sleep 0.01
 done
 
 # Start user processes
 for ((i=1; i<=$num_users; i++)); do
-    python3 $PROJECT_DIR/UserCode/User.py $i $num_users $num_assisting_nodes $commitment &
+    python3 $PROJECT_DIR/UserCode/User.py $i $num_users $num_assisting_nodes $commitment $bandwidth_mode &
     
     if [ $i -eq $num_users ]; then
         if [ $commitment -eq 1 ]; then
