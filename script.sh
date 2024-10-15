@@ -29,21 +29,6 @@ bandwidth_mode=0 # Bandwidth mode: 0 or 1 (default 0)
 
 # Function to display usage information
 usage() {
-    echo -e "\nUsage: $0 -u <number_of_users> -a <number_of_assisting_nodes> -c <commitment> [-o <printAggOutput>] [-p <server_port>]"
-    echo -e "\nOptions:"
-    echo "  -u <number_of_users>             Required. Number of users (must be greater than 2)"
-    echo "  -a <number_of_assisting_nodes>   Required. Number of assisting nodes"
-    echo "  -c <commitment>                  Required. 0: without commitment, 1: with commitment"
-    echo "  -o <printAggOutput>              Optional. 0: no print, 1: print result, 2: print summary (default: 0)"
-    echo "  -p <server_port>                 Optional. Server port (default: 9000, range: 2000-60000)"
-    echo -e "\nExample:"
-    echo "  $0 -u 200 -a 3 -c 0"
-    echo "  $0 -u 200 -a 3 -c 1 -o 2 -p 10000"
-    echo -e "\n"
-    exit 1
-}
-
-usage() {
     echo -e "\nUsage: $0 -u <number_of_users> -a <number_of_assisting_nodes> -c <commitment> [-o <printAggOutput>] [-p <server_port>] [-b <bandwidth_mode>]"
     echo -e "\nOptions:"
     echo "  -u <number_of_users>              Required. Number of users (must be greater than 2)"
@@ -55,7 +40,7 @@ usage() {
     echo -e "\nExample:"
     echo "  $0 -u 200 -a 3 -c 0 -b 1"
     echo "  $0 -u 200 -a 3 -c 1 -o 2 -p 10000"
-    echo "  $0 -u 200 -a 3 -p 10000 -b 2"
+    echo "  $0 -u 200 -a 3 -p 12000 -b 2 -c 0"
     echo -e "\n"
     exit 1
 }
