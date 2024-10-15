@@ -45,24 +45,36 @@ ADDRlist = [] # List to store addresses of assistant nodes
 executionTime = [] # List to store execution times for shared secrets
 decryptionTimeSetup = [] # List to store decryption times for setup phase
 commitmentGenTime = [] # List to store commitment generation times
+outboundBandWidth = [] # List to store outbound bandwidth
 
-def printResults(User_ID, NumberOfUsers, timeMaliciousSetting, setupPhaseComputationTime1, aggTimeMaliciousSetting, aggTime, commitmentUse):
-    if int(User_ID) == int(NumberOfUsers):
-        """
-        Print the setup and aggregation times.
-        """
-        print("\n==== Client RESULTS ====")
-        SumExeTime = sum(executionTime)
-        setupPhaseComputationTime1 += SumExeTime
-        print("Client: Semi-Honest Setting (Setup Phase):",(setupPhaseComputationTime1) * 10**3, "ms")
-        print("Client: Malicious Setting (Setup Phase):",(setupPhaseComputationTime1 + timeMaliciousSetting) * 10**3, "ms")
-        print("Client: Semi-Honest Setting (Aggregation Phase):",(aggTime), "ms")
-        aggTime += (aggTimeMaliciousSetting * 10**3)
-        print("Client: Malicious Setting (Aggregation Phase):",(aggTime) , "ms")
-        if commitmentUse == 1:
-            print("Client: Decryption Time:",(sum(decryptionTimeSetup)) * 10**3 , "ms")
-            print("Client: Commitment Time:",(commitmentGenTime[0] * 10**3) / 60000, "min")
-        print("========================\n")
+def printResults(timeMaliciousSetting, setupPhaseComputationTime1, aggTimeMaliciousSetting, aggTime, commitmentUse):
+    """
+    Print the setup and aggregation times.
+    """
+    print("\n==== Client RESULTS ====")
+    SumExeTime = sum(executionTime)
+    setupPhaseComputationTime1 += SumExeTime
+    print("Client: Semi-Honest Setting (Setup Phase):",(setupPhaseComputationTime1) * 10**3, "ms")
+    print("Client: Malicious Setting (Setup Phase):",(setupPhaseComputationTime1 + timeMaliciousSetting) * 10**3, "ms")
+    print("Client: Semi-Honest Setting (Aggregation Phase):",(aggTime), "ms")
+    aggTime += (aggTimeMaliciousSetting * 10**3)
+    print("Client: Malicious Setting (Aggregation Phase):",(aggTime) , "ms")
+    if commitmentUse == 1:
+        print("Client: Decryption Time:",(sum(decryptionTimeSetup)) * 10**3 , "ms")
+        print("Client: Commitment Time:",(commitmentGenTime[0] * 10**3) / 60000, "min")
+    print("========================")
+
+def printOutboundBandwidth():
+    """
+    Print the outbound bandwidth.
+    """
+    print("============================================")
+    print("**** Client OUTBOUND BANDWIDTH ****")
+    print("Client: Semi-Honest Setting (Setup Phase):", outboundBandWidth[0], "B")
+    print("Client: Malicious Setting (Setup Phase):", outboundBandWidth[1], "B")
+    print("Client: Semi-Honest Setting (Aggregation Phase):",outboundBandWidth[2], "B")
+    print("Client: Malicious Setting (Aggregation Phase):",outboundBandWidth[3], "B")        
+    print("============================================\n")
 
 def validateAggregatedModel(finalWeightListAggregated, listOfGenerators):
     """
@@ -382,7 +394,7 @@ def generatingSignature(finalMaskedWeightList, private_key_sign, cm, messageMPri
 
     return sigServer, sigAssistingNodes, aggTimeMaliciousSetting
 
-def train_model(client, private_key_sign, User_ID, NumberOfUsers, commitmentUse):
+def train_model(client, private_key_sign, User_ID, NumberOfUsers, commitmentUse, NumberOfANs):
     """
     Get the trained model weights and compute masked weights, generate signatures, and sending data to the server.
     Algorithm 2 - Aggregation (Phase 1) - Step 1 & 2 & 3
@@ -420,6 +432,12 @@ def train_model(client, private_key_sign, User_ID, NumberOfUsers, commitmentUse)
     
     if commitmentUse == 1 and int(User_ID) == int(NumberOfUsers):
         commitmentGenTime.append(ecMultTime + timeForCM)
+    
+    finalMaskedWeightListInts = [int(element, 2) for element in finalMaskedWeightList]
+    data_size = struct.pack(f'{len(finalMaskedWeightListInts)}I', *finalMaskedWeightListInts)
+    t_size = struct.pack('i', iterationNumber)
+    outboundBandWidth.append(len(data_size) + len(t_size) + (len(t_size) * NumberOfANs))
+    outboundBandWidth.append((len(data_size) + len(t_size) + len(sigServer)) + ((len(t_size) + len(sigAssistingNodes)) * NumberOfANs))
     
     return sigServer, sigAssistingNodes, messageMPrime, TotalTime, aggTimeMaliciousSetting, cm, listOfGenerators
 
@@ -562,11 +580,16 @@ def main():
     NumberOfUsers = int(sys.argv[2])
     NumberOfANs = int(sys.argv[3])
     commitmentUse = int(sys.argv[4]) # 0 = without commiment & 1 = with commitment
+    bandwidthPrint = int(sys.argv[5])
     input_argv = 1
 
     # Generate the key
     private_key_sign, public_key_sign, private_key, public_key, keyGenTime, timeMaliciousSetting = KeyGen()
     setupPhaseComputationTime1 = keyGenTime
+    public_key_bytes = public_key.format(compressed=True)
+    public_key_bytes2 = public_key_sign.format(compressed=True)
+    outboundBandWidth.append(len(public_key_bytes) * NumberOfANs)
+    outboundBandWidth.append(((len(public_key_bytes2) + len(public_key_bytes)) * NumberOfANs) + len(public_key_bytes2))
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
@@ -583,9 +606,21 @@ def main():
         print("Client: Setup phase finished.")
 
     # Compute the masked weight 
-    sigServer, sigAssistingNodes, messageMPrime, aggTime, aggTimeMaliciousSetting, cm, listOfGenerators = train_model(client, private_key_sign, User_ID, NumberOfUsers, commitmentUse)
+    sigServer, sigAssistingNodes, messageMPrime, aggTime, aggTimeMaliciousSetting, cm, listOfGenerators = train_model(client, private_key_sign, User_ID, NumberOfUsers, commitmentUse, NumberOfANs)
 
-    printResults(User_ID, NumberOfUsers, timeMaliciousSetting, setupPhaseComputationTime1, aggTimeMaliciousSetting, aggTime, commitmentUse)
+    if int(User_ID) == int(NumberOfUsers):
+        if bandwidthPrint == 0:
+            printResults(timeMaliciousSetting, setupPhaseComputationTime1, aggTimeMaliciousSetting, aggTime, commitmentUse)
+            print("")
+        elif bandwidthPrint == 1:
+            # Print both results and outbound bandwidth
+            printResults(timeMaliciousSetting, setupPhaseComputationTime1, aggTimeMaliciousSetting, aggTime, commitmentUse)
+            print("")
+            printOutboundBandwidth()
+        else:
+            # Print only the outbound bandwidth
+            print("")
+            printOutboundBandwidth()
 
     finalWeightList = sendingSigofMaskingUpdates(client, listOfAssistantNodeconnections, sigAssistingNodes, messageMPrime, sigServer, cm, User_ID, NumberOfUsers, commitmentUse)
 
