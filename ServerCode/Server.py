@@ -44,6 +44,7 @@ xListValues = []  # List to store x elliptic curve points
 FinalWeightList = [] # List to store the final aggregated weight list
 total_0 = [] # List to store a[0] from assistant nodes
 cmAggTime = [] # List to store the aggregation times of commitments
+outboundBandWidth = [] # List to store outbound bandwidth
 
 def printResults(aggTime1, aggTime2, aggTime3, keyGenTime, ver_user_time, ver_AN_time, commitmentUse):
     """
@@ -58,8 +59,20 @@ def printResults(aggTime1, aggTime2, aggTime3, keyGenTime, ver_user_time, ver_AN
     print("Server: Malicious Setting (Aggregation Phase):",(totalAggTime + ver_user_time + ver_AN_time) * 10**3, "ms")
     if commitmentUse == 1:
         print("Server: Commitment Aggregation Time",(cmAggTime[0]) * 10**3, "ms")
-    print("========================\n")
-    
+    print("========================")
+
+def printOutboundBandwidth():
+    """
+    Print the outbound bandwidth.
+    """
+    print("===================================")
+    print("**** Server OUTBOUND BANDWIDTH ****")
+    print("Server: Semi-Honest Setting (Setup Phase): 0 B")
+    print("Server: Malicious Setting (Setup Phase):", outboundBandWidth[0], "B")
+    print("Server: Semi-Honest Setting (Aggregation Phase):",outboundBandWidth[1], "B")
+    print("Server: Malicious Setting (Aggregation Phase):",outboundBandWidth[2], "B")        
+    print("===================================\n")
+
 def send_x_w(last_connection):
     """
     Send the final weight list and other necessary data to online clients.
@@ -197,7 +210,7 @@ def aggOfLists(aVector, NumOfAN, type):
 
     return result, aggTime
 
-def computeFinalUpdate(printAggOutput):
+def computeFinalUpdate(printAggOutput, NumberOfUsers, private_key_sign):
     """
     Compute the final aggregated update from the masked updates and user-provided values.
     Algorithm 2 - Aggregation (Phase 2) - Step 4
@@ -237,9 +250,15 @@ def computeFinalUpdate(printAggOutput):
         print("Aggregated vector:")
         pprint(FinalWeightList[:10] + ['...'] + FinalWeightList[-10:])
 
+    data_size = struct.pack(f'{len(FinalWeightList)}i', *FinalWeightList)
+    outboundBandWidth.append(len(data_size)*NumberOfUsers)
+    messageMForSigHash = hashlib.sha256(data_size).hexdigest()
+    signature = private_key_sign.sign(messageMForSigHash.encode('utf-8'))
+    outboundBandWidth.append((len(data_size)*NumberOfUsers) + len(signature))
+
     return aggTime1, aggTime2, aggTime3
 
-def checkUserListCondition(printAggOutput):
+def checkUserListCondition(printAggOutput, NumberOfUsers, private_key_sign):
     """
     Check if the list of users is correct and perform aggregation if valid.
     Algorithm 2 - Aggregation (Phase 2) - Step 4
@@ -254,7 +273,7 @@ def checkUserListCondition(printAggOutput):
 
     if flag == 0:
         print("Server: Aggregating...")
-        aggTime1, aggTime2, aggTime3 = computeFinalUpdate(printAggOutput) # Algorithm 2 - Aggregation (Phase 2) - Step 4
+        aggTime1, aggTime2, aggTime3 = computeFinalUpdate(printAggOutput, NumberOfUsers, private_key_sign) # Algorithm 2 - Aggregation (Phase 2) - Step 4
     else:
         print("Server: ABORT - Some connections were lost or congested, possibly due to system resource limitations. Please try rerunning the code, check the file descriptor limits, or consider reducing the number of clients.")
 
@@ -477,7 +496,7 @@ def KeyGen():
     end_setup_phase = time.time()
     keyGenTime = end_setup_phase-start_setup_phase
 
-    return public_key_sign, keyGenTime
+    return public_key_sign, private_key_sign, keyGenTime
 
 def main():
     """
@@ -488,14 +507,17 @@ def main():
     NumberOfANs = int(sys.argv[2])
     commitmentUse = int(sys.argv[3]) # 0 = without commiment & 1 = with commitment
     printAggOutput = int(sys.argv[4])
+    bandwidthPrint = int(sys.argv[5])
 
     print("Server: Server is up")
     print("Server: Num of Users", NumberOfUsers)
     print("Server: Num of Assisting Nodes", NumberOfANs)
 
     # Generate the key
-    public_key_sign, keyGenTime = KeyGen()
+    public_key_sign, private_key_sign, keyGenTime = KeyGen()
     print("Server: Setup phase finished.")
+    public_key_bytes = public_key_sign.format(compressed=True)
+    outboundBandWidth.append(len(public_key_bytes) * NumberOfUsers)
 
     # Manage incoming connections
     serverSocket, last_connection = manageConnections(public_key_sign, clientDict, assistantNodeDict, NumberOfUsers, NumberOfANs, commitmentUse)
@@ -503,14 +525,24 @@ def main():
     print("Server: Awaiting all clients...")
     ver_user_time = verifySigofUsers()
     ver_AN_time = verifySigofANs()
-    aggTime1, aggTime2, aggTime3, flag = checkUserListCondition(printAggOutput)
+    aggTime1, aggTime2, aggTime3, flag = checkUserListCondition(printAggOutput, NumberOfUsers, private_key_sign)
 
     # If all users are verified, perform the aggregation and send results
     if flag == 0:
         if commitmentUse == 1:
             computeX() # Algorithm 2 - Aggregation (Phase 2) - Step 5
             send_x_w(last_connection)
-        printResults(aggTime1, aggTime2, aggTime3, keyGenTime, ver_user_time, ver_AN_time, commitmentUse)
+        if bandwidthPrint == 0:
+            printResults(aggTime1, aggTime2, aggTime3, keyGenTime, ver_user_time, ver_AN_time, commitmentUse)
+            print("")
+        elif bandwidthPrint == 1:
+            printResults(aggTime1, aggTime2, aggTime3, keyGenTime, ver_user_time, ver_AN_time, commitmentUse)
+            print("")
+            printOutboundBandwidth()
+        else:
+            # Print only the outbound bandwidth
+            print("")
+            printOutboundBandwidth()
 
     serverSocket.close()
 
