@@ -47,6 +47,10 @@ To run the e-SeaFL system, use the following command:
   - `0`: No print (default).
   - `1`: Print result.
   - `2`: Print summary.
+- `-b <bandwidth_mode>`: **Optional**. Controls the output behavior for outbound bandwidth: 
+  - `0`: No print (default).
+  - `1`: Print outbound bandwidth.
+  - `2`: Only print outbound bandwidth.
 - `-p <server_port>`: **Optional**. The port number for the server (default is \`9000\`, valid range is \`2000-60000\`).
 
 #### Examples:
@@ -73,4 +77,10 @@ To run the e-SeaFL system, use the following command:
 
 ```bash
 ./script.sh -u 200 -a 3 -c 1 -o 2 -p 10300
+```
+
+**Running with 600 users, 3 assisting nodes, without commitment, and printing the outbound bandwidth:**
+
+```bash
+./script.sh -u 600 -a 3 -c 1 -b 1 -p 15000
 ```
