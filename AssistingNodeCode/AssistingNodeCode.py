@@ -41,20 +41,32 @@ clientDictForXpa = {} # Dictionary to store shared secrets
 executionTime = [] # List to store execution times for shared secrets
 listofClientAddress = [] # List to store client addresses
 messageMdoublePrime = [] # List to store masked updates
+outboundBandWidth = [] # List to store outbound bandwidth
 
-def printResults(AssistantNode_ID, NumberOfANs, timeMaliciousSetting, computeMaskValueTime, totalTime, setupPhaseComputationTime, aggTime1):
+def printResults(timeMaliciousSetting, computeMaskValueTime, totalTime, setupPhaseComputationTime, aggTime1):
     """
     Print the setup and aggregation times.
     """
-    if int(AssistantNode_ID) == NumberOfANs:
-        print("\n==== Assisting Node RESULTS ====")
-        sumOfcomputingSecretSeed = sum(executionTime)  
-        setupPhaseComputationTime += sumOfcomputingSecretSeed
-        print("AN: Semi-Honest Setting (Setup Phase):",(setupPhaseComputationTime) * 10**3, "ms")
-        print("AN: Malicious Setting (Setup Phase):",(setupPhaseComputationTime + timeMaliciousSetting) * 10**3, "ms")        
-        print("AN: Semi-Honest Setting (Aggregation Phase):",(computeMaskValueTime), "ms")
-        print("AN: Malicious Setting (Aggregation Phase):",(totalTime + aggTime1), "ms")
-        print("===============================\n")
+    print("\n==== Assisting Node RESULTS ====")
+    sumOfcomputingSecretSeed = sum(executionTime)  
+    setupPhaseComputationTime += sumOfcomputingSecretSeed
+    print("AN: Semi-Honest Setting (Setup Phase):",(setupPhaseComputationTime) * 10**3, "ms")
+    print("AN: Malicious Setting (Setup Phase):",(setupPhaseComputationTime + timeMaliciousSetting) * 10**3, "ms")        
+    print("AN: Semi-Honest Setting (Aggregation Phase):",(computeMaskValueTime), "ms")
+    print("AN: Malicious Setting (Aggregation Phase):",(totalTime + aggTime1), "ms")
+    print("===============================")
+
+def printOutboundBandwidth():
+    """
+    Print the outbound bandwidth.
+    """
+    print("============================================")
+    print("**** Assisting Node OUTBOUND BANDWIDTH ****")
+    print("AN: Semi-Honest Setting (Setup Phase):", outboundBandWidth[0], "B")
+    print("AN: Malicious Setting (Setup Phase):", outboundBandWidth[1], "B")
+    print("AN: Semi-Honest Setting (Aggregation Phase):",outboundBandWidth[2], "B")
+    print("AN: Malicious Setting (Aggregation Phase):",outboundBandWidth[3], "B")        
+    print("============================================\n")
 
 def commitmentMode(commitmentUse, AssistantNode_ID, NumberOfANs):
     if commitmentUse == 1 and int(AssistantNode_ID) == NumberOfANs:
@@ -211,6 +223,13 @@ def checkThreshold(AssistantNode, private_key_sign, AssistantNode_ID, NumberOfAN
     aggTimeMaliciousSetting = endAggTimeMaliciousSetting - startAggTimeMaliciousSetting
     
     sendingToServer(AssistantNode, sigServer, iterationNumber, total_0)  
+
+    finalMaskedInts = [int(element, 2) for element in finalMaskedValue]
+    data_size = struct.pack(f'{len(finalMaskedInts)}I', *finalMaskedInts)
+    list_size = struct.pack('i', len(userlist))
+    t_size = struct.pack('i', iterationNumber)
+    outboundBandWidth.append(len(data_size) + len(list_size) + len(t_size))
+    outboundBandWidth.append(len(data_size) + len(list_size) + len(t_size) + len(sigServer))
 
     totalTime = computeMaskValueTime + ((aggTimeMaliciousSetting) * 10**3)
     return computeMaskValueTime, totalTime
@@ -405,11 +424,16 @@ def main():
     NumberOfUsers = int(sys.argv[2])
     NumberOfANs = int(sys.argv[3])
     commitmentUse = int(sys.argv[4]) # 0 = without commiment & 1 = with commitment
+    bandwidthPrint = int(sys.argv[5])
     input_argv = 2
 
     # Generate the key
     private_key_sign, public_key_sign, private_key, public_key, keyGenTime, timeMaliciousSetting = KeyGen()
     setupPhaseComputationTime = keyGenTime
+    public_key_bytes = public_key.format(compressed=True)
+    public_key_bytes2 = public_key_sign.format(compressed=True)
+    outboundBandWidth.append(len(public_key_bytes) * NumberOfUsers)
+    outboundBandWidth.append(((len(public_key_bytes2) + len(public_key_bytes)) * NumberOfUsers) + len(public_key_bytes2))
 
     rho = commitmentMode(commitmentUse, AssistantNode_ID, NumberOfANs)
         
@@ -431,7 +455,19 @@ def main():
     iterationNumber, aggTime1 = verifySigofUsers()
     computeMaskValueTime, totalTime = checkThreshold(AssistantNode, private_key_sign, AssistantNode_ID, NumberOfANs, iterationNumber)
 
-    printResults(AssistantNode_ID, NumberOfANs, timeMaliciousSetting, computeMaskValueTime, totalTime, setupPhaseComputationTime, aggTime1)
+    if int(AssistantNode_ID) == NumberOfANs:
+        if bandwidthPrint == 0:
+            printResults(timeMaliciousSetting, computeMaskValueTime, totalTime, setupPhaseComputationTime, aggTime1)
+            print("")
+        elif bandwidthPrint == 1:
+            # Print both results and outbound bandwidth
+            printResults(timeMaliciousSetting, computeMaskValueTime, totalTime, setupPhaseComputationTime, aggTime1)
+            print("")
+            printOutboundBandwidth()
+        else:
+            # Print only the outbound bandwidth
+            print("")
+            printOutboundBandwidth()
 
 if __name__ == "__main__":
     main()
