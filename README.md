@@ -82,5 +82,8 @@ To run the e-SeaFL system, use the following command:
 **Running with 600 users, 3 assisting nodes, without commitment, and printing the outbound bandwidth:**
 
 ```bash
-./script.sh -u 600 -a 3 -c 1 -b 1 -p 15000
+./script.sh -u 600 -a 3 -c 0 -b 1 -p 15000
 ```
+  
+
+
