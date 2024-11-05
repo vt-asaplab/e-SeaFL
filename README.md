@@ -35,7 +35,7 @@ To automatically install the required libraries and packages, run the following 
 To run the e-SeaFL system, use the following command:
 
 ```bash
-./script.sh -u <number_of_users> -a <number_of_assisting_nodes> -c <commitment> [-o <printAggOutput>] [-p <server_port>]
+./script.sh -u <number_of_users> -a <number_of_assisting_nodes> -c <commitment> [-o <printAggOutput>] [-p <server_port>] [-b <bandwidth_mode>]
 ```
 
 ### Parameters:
