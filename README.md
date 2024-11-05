@@ -84,6 +84,10 @@ To run the e-SeaFL system, use the following command:
 ```bash
 ./script.sh -u 600 -a 3 -c 0 -b 1 -p 15000
 ```
+
+## Artifact Documentation
+
+For a detailed description of how to reproduce the results presented in the paper, please refer to our [Artifact Documentation](/Documents/ACSAC_2024_Artifact_Documentation_Efficient_Secure_Aggregation_for_Privacy-Preserving_Federated_Machine_Learning.pdf). 
   
 
 
