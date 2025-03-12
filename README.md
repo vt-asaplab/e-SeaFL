@@ -4,6 +4,11 @@ This repository contains the full implementation of [**e-SeaFL** paper](https://
 
 **Warning**: This code is a proof-of-concept prototype and is not ready for production use.
 
+## Awards
+This work has been awarded all three available badges—Artifact Available, Reviewed, and Reproducible—by the ACSAC 2024 reviewers.
+
+<img width="458" alt="Image" src="https://github.com/user-attachments/assets/9ee47992-d04c-4906-85e7-b5633b2df132" />
+
 ## Code Structure
 
 - **ServerCode/**: Contains the `Server.py` file, which handles the server-side logic in the system.
