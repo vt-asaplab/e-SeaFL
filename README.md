@@ -95,4 +95,19 @@ To run the e-SeaFL system, use the following command:
 For a detailed description of how to reproduce the results presented in the paper, please refer to our [Artifact Documentation](/Documents/ACSAC_2024_Artifact_Documentation_Efficient_Secure_Aggregation_for_Privacy-Preserving_Federated_Machine_Learning.pdf). 
   
 
+## Citing
+
+If you use this repository or build upon our work, we would appreciate it if you cite our paper using the following BibTeX entry:
+
+```bibtex
+@inproceedings{eSeaFL2024,
+  author={Behnia, Rouzbeh and Riasi, Arman and Ebrahimi, Reza and Chow, Sherman S. M. and Padmanabhan, Balaji and Hoang, Thang},
+  booktitle={2024 Annual Computer Security Applications Conference (ACSAC)}, 
+  title={Efficient Secure Aggregation for Privacy-Preserving Federated Machine Learning}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={778-793},
+  doi={10.1109/ACSAC63791.2024.00069}}
+}
 
